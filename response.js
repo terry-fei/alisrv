@@ -32,7 +32,7 @@ module.exports = class Response extends http.ServerResponse {
   }
 
   setHeader(key, value) {
-    this[HEADERS][key] = value;
+    this[HEADERS][key.toLowerCase()] = value;
     this.res.setHeader(key, value);
   }
 
