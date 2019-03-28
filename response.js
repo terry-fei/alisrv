@@ -1,13 +1,15 @@
 const http = require('http');
 const stream = require('stream');
+const sanitizeHeaders = require('./sanitize-headers');
 
 const headerEnd = '\r\n\r\n';
 
 const BODY = Symbol();
+const HEADERS = Symbol();
 
 function getString(data) {
   if (Buffer.isBuffer(data)) {
-    return data.toString();
+    return data.toString('utf8');
   } else if (typeof data === 'string') {
     return data;
   } else {
@@ -20,28 +22,45 @@ module.exports = class Response extends http.ServerResponse {
     return Buffer.concat(res[BODY]);
   }
 
+  getHeaders() {
+    console.log(this[HEADERS]);
+    return this[HEADERS];
+  }
+
+  get headers() {
+    return this[HEADERS];
+  }
+
+  setHeader(key, value) {
+    this[HEADERS][key] = value;
+    this.res.setHeader(key, value);
+  }
+
   constructor(req, res) {
     super(req);
+    this.res = res;
+    res.getHeaders = function () {
+      console.log('adfadfas headers');
+    }
 
     this[BODY] = [];
+    this[HEADERS] = {};
 
     this._headers = {};
 
-    this.setHeader = res.setHeader.bind(res);
-
-    Object.defineProperty(this, 'statusCode', {
-      get() {
-        if (!this._val) return 200;
-        return this._val;
-      },
-      set(val) {
-        this._val = val;
-        res.setStatusCode(val);
-      }
-    });
-
     this.useChunkedEncodingByDefault = false;
     this.chunkedEncoding = false;
+
+    // Object.defineProperty(this, 'statusCode', {
+    //   get() {
+    //     if (!this._val) return 200;
+    //     return this._val;
+    //   },
+    //   set(val) {
+    //     this._val = val;
+    //     res.setStatusCode(val);
+    //   }
+    // });
 
     const addData = (data) => {
       if (Buffer.isBuffer(data) || typeof data === 'string') {
